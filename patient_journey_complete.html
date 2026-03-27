@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patient Journey — Complete Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --pre:#3b82f6; --pre-light:#93c5fd; --pre-bg:#0d1e33;
+  --dur:#f59e0b; --dur-light:#fde68a; --dur-bg:#1e1000;
+  --post:#10b981;--post-light:#6ee7b7;--post-bg:#061a10;
+  --info:#a78bfa;--info-light:#ddd6fe;--info-bg:#140d2e;
+  --warn:#fb923c;--warn-light:#fed7aa;--warn-bg:#1e0e00;
+  --card:#0c1422; --border:#141e30; --text:#c8daf0; --muted:#7a9bbf;
+}
+
+body{
+  font-family:'Sarabun',sans-serif;
+  background:#060a12;
+  color:#e0e6f0;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ══════════════════════════════════════════
+   UNIFIED STICKY NAV
+══════════════════════════════════════════ */
+.nav{
+  position:sticky;top:0;z-index:200;
+  background:#070b14ee;
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+  display:flex;gap:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none}
+.tab{
+  padding:14px 18px;
+  font-size:.8rem;font-weight:700;
+  letter-spacing:.06em;color:var(--muted);
+  cursor:pointer;border-bottom:3px solid transparent;
+  white-space:nowrap;transition:all .25s;
+  text-transform:uppercase;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:#fff;border-color:var(--active,#3b82f6)}
+
+/* ══════════════════════════════════════════
+   PANEL SYSTEM (top-level section switcher)
+══════════════════════════════════════════ */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ══════════════════════════════════════════
+   ── ANIMATION PANEL (sec0) ──
+══════════════════════════════════════════ */
+#sec0 .anim-hdr{
+  text-align:center;
+  padding:32px 20px 20px;
+}
+#sec0 .anim-hdr h1{
+  font-size:1.7rem;font-weight:800;
+  background:linear-gradient(135deg,#60a5fa,#a78bfa,#34d399);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:6px;
+}
+#sec0 .anim-hdr p{font-size:.88rem;color:#7a9bbf}
+
+/* PHASE LEGEND */
+.legend{
+  display:flex;justify-content:center;gap:24px;
+  padding:0 20px 20px;flex-wrap:wrap;
+}
+.leg{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;color:#c0d0e8}
+.leg-dot{width:10px;height:10px;border-radius:50%}
+
+/* SCROLL WRAPPER */
+.scroll-outer{
+  width:100%;overflow-x:auto;
+  padding:0 24px 8px;
+  scrollbar-width:thin;
+  scrollbar-color:#1a2540 #060a12;
+}
+.scroll-outer::-webkit-scrollbar{height:4px}
+.scroll-outer::-webkit-scrollbar-track{background:#060a12}
+.scroll-outer::-webkit-scrollbar-thumb{background:#1a2540;border-radius:4px}
+
+/* FLOW TRACK */
+.flow-wrap{
+  position:relative;min-width:max-content;
+  padding:30px 32px 20px;
+}
+.flow-line{
+  position:absolute;top:74px;
+  left:32px;right:32px;
+  height:3px;background:#0f1825;border-radius:3px;z-index:0;
+}
+.flow-line-fill{
+  position:absolute;top:0;left:0;height:100%;
+  border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1);width:0%;
+}
+.phase-bands{
+  position:absolute;top:72px;left:32px;right:32px;
+  height:7px;border-radius:4px;
+  display:flex;overflow:hidden;opacity:.18;z-index:0;
+}
+.band-pre{background:#3b82f6;flex:14}
+.band-dur{background:#f59e0b;flex:15}
+.band-post{background:#10b981;flex:12}
+
+/* PATIENT ICON */
+.patient{
+  position:absolute;top:32px;font-size:2rem;
+  transition:left .7s cubic-bezier(.4,0,.2,1);
+  filter:drop-shadow(0 0 14px rgba(96,165,250,.9));
+  z-index:10;pointer-events:none;transform:translateX(-50%);
+}
+
+/* NODES ROW */
+.nodes-row{
+  display:flex;align-items:flex-start;gap:0;
+  position:relative;z-index:2;
+}
+.node-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;width:88px;cursor:pointer;
+}
+.node-conn{
+  flex:1;min-width:14px;height:3px;background:transparent;
+  margin-top:37px;align-self:flex-start;position:relative;z-index:1;
+}
+.node-circle{
+  width:48px;height:48px;border-radius:50%;
+  background:#0c1422;border:2.5px solid #1a2540;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.35rem;
+  transition:all .45s cubic-bezier(.4,0,.2,1);
+  position:relative;margin-bottom:10px;
+}
+.node-circle.done{background:var(--bg);border-color:var(--c);color:var(--c)}
+.node-circle.active{
+  background:var(--bg);border-color:var(--c);
+  box-shadow:0 0 0 5px var(--glow), 0 0 22px var(--glow);
+  transform:scale(1.15);
+}
+@keyframes pulse{
+  0%  {box-shadow:0 0 0 0 var(--glow), 0 0 22px var(--glow)}
+  70% {box-shadow:0 0 0 10px transparent, 0 0 22px var(--glow)}
+  100%{box-shadow:0 0 0 0 transparent, 0 0 22px var(--glow)}
+}
+.node-circle.active{animation:pulse 2s infinite}
+
+.node-name{
+  font-size:.68rem;font-weight:700;color:#7a9bbf;text-align:center;
+  line-height:1.35;transition:color .4s;letter-spacing:.02em;width:80px;
+}
+.node-wrap.active .node-name{color:var(--c)}
+.node-wrap.done  .node-name{color:var(--c);opacity:.65}
+
+/* DETAIL CARD */
+.detail-section{
+  width:100%;max-width:820px;margin:28px auto 0;
+  padding:0 20px;min-height:260px;
+}
+.detail-card{
+  background:#0c1422;border-radius:20px;
+  border:1.5px solid #141e30;
+  padding:28px 30px 22px;
+  position:relative;overflow:hidden;
+  transition:border-color .5s,box-shadow .5s;
+  animation:fadeUp .4s ease;
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+.detail-stripe{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  transition:background .5s;
+}
+.dc-top{margin-bottom:18px}
+.dc-phase-tag{
+  display:inline-block;font-size:.68rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 12px;border-radius:20px;margin-bottom:10px;
+}
+.dc-step-num{font-size:.75rem;color:#7a9bbf;margin-bottom:4px;letter-spacing:.08em}
+.dc-title{font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.dc-sub{font-size:.9rem;color:#8fb8d8;margin-bottom:16px}
+.dc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:560px){.dc-grid{grid-template-columns:1fr}}
+.dc-box{
+  background:#07101c;border-radius:14px;
+  padding:14px 16px;border:1px solid #141e30;
+  animation:fadeUp .4s ease both;
+}
+.dc-box-head{font-size:.92rem;font-weight:700;margin-bottom:6px}
+.dc-box-body{font-size:.82rem;color:#8fb8d8;line-height:1.65}
+.dc-ai{
+  display:flex;align-items:flex-start;gap:9px;
+  background:#05090f;border-radius:12px;
+  padding:12px 14px;border:1px solid #1a2540;
+  animation:fadeUp .4s ease .28s both;
+}
+.ai-pill{
+  flex-shrink:0;font-size:.67rem;font-weight:700;
+  padding:3px 9px;border-radius:8px;letter-spacing:.06em;
+  background:rgba(167,139,250,.13);color:#a78bfa;
+  border:1px solid rgba(167,139,250,.25);white-space:nowrap;
+}
+.ai-list{font-size:.82rem;color:#9ac4df;line-height:1.6}
+
+/* IDLE */
+.idle-card{
+  background:#0c1422;border-radius:20px;
+  border:1.5px solid #141e30;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  min-height:220px;gap:12px;color:#7a9bbf;
+}
+.idle-icon{font-size:3.5rem;opacity:.5}
+
+/* CONTROLS */
+.controls{
+  display:flex;align-items:center;gap:14px;
+  justify-content:center;padding:24px 20px 40px;flex-wrap:wrap;
+}
+.btn-next{
+  padding:13px 44px;border-radius:50px;border:none;
+  font-family:'Sarabun',sans-serif;font-size:1rem;font-weight:700;
+  cursor:pointer;letter-spacing:.04em;color:#fff;
+  background:linear-gradient(135deg,#3b82f6,#6366f1);
+  box-shadow:0 4px 24px rgba(99,102,241,.35);
+  transition:transform .2s,box-shadow .2s;
+}
+.btn-next:hover{transform:scale(1.04)}
+.btn-next:active{transform:scale(.97)}
+.btn-next.green{background:linear-gradient(135deg,#10b981,#34d399);box-shadow:0 4px 24px rgba(16,185,129,.35)}
+.btn-reset{
+  padding:10px 20px;border-radius:50px;
+  border:1px solid #1a2540;background:transparent;
+  color:#7a9bbf;font-family:'Sarabun',sans-serif;
+  font-size:.85rem;cursor:pointer;transition:all .2s;
+}
+.btn-reset:hover{background:#111d2e;color:#b0c8e0}
+.btn-prev{
+  padding:13px 28px;border-radius:50px;border:none;
+  font-family:'Sarabun',sans-serif;font-size:1rem;font-weight:700;
+  cursor:pointer;letter-spacing:.04em;color:#93c5fd;
+  background:#0f1e35;border:1.5px solid #1e3a5f;transition:all .2s;
+}
+.btn-prev:hover{background:#1a2e48;border-color:#3b82f6}
+.btn-prev:active{transform:scale(.97)}
+.step-ctr{font-size:.82rem;color:#7a9bbf;letter-spacing:.06em;min-width:52px;text-align:center}
+
+/* ANIMATION MOBILE */
+@media(max-width:600px){
+  #sec0 .anim-hdr{padding:22px 16px 14px}
+  #sec0 .anim-hdr h1{font-size:1.3rem}
+  #sec0 .anim-hdr p{font-size:.8rem}
+  .legend{gap:14px;padding:0 16px 16px}
+  .leg{font-size:.72rem}
+  .scroll-outer{padding:0 12px 8px}
+  .flow-wrap{padding:24px 16px 16px}
+  .flow-line{left:16px;right:16px;top:60px}
+  .phase-bands{left:16px;right:16px;top:58px}
+  .patient{top:28px;font-size:1.3rem}
+  .node-wrap{width:60px}
+  .node-circle{width:34px;height:34px;font-size:.85rem;margin-bottom:7px}
+  .node-conn{margin-top:28px;min-width:8px}
+  .node-name{font-size:.58rem;width:58px}
+  .detail-section{padding:0 12px;margin-top:20px}
+  .detail-card{padding:20px 16px 16px;border-radius:16px}
+  .dc-title{font-size:1.15rem}
+  .dc-sub{font-size:.82rem}
+  .dc-phase-tag{font-size:.62rem}
+  .dc-box{padding:12px 13px}
+  .dc-box-head{font-size:.75rem}
+  .dc-box-body{font-size:.74rem}
+  .ai-list{font-size:.74rem}
+  .controls{gap:8px;padding:18px 12px 28px;flex-wrap:wrap}
+  .btn-next{padding:12px 28px;font-size:.92rem;flex:1;min-width:120px}
+  .btn-prev{padding:12px 18px;font-size:.92rem}
+  .btn-reset{padding:9px 14px;font-size:.8rem}
+  .step-ctr{font-size:.76rem;min-width:40px}
+  .idle-card{min-height:160px;font-size:.88rem;border-radius:16px}
+  .idle-icon{font-size:2.2rem}
+}
+
+/* ══════════════════════════════════════════
+   ── STRATEGIC PANELS (sec1-sec4) ──
+══════════════════════════════════════════ */
+.strat-wrap{max-width:860px;margin:0 auto;padding:0 16px 60px}
+
+/* SECTION TITLE */
+.sec-title{
+  display:flex;align-items:center;gap:14px;padding:28px 0 22px;
+}
+.sec-icon{font-size:1.8rem}
+.sec-title h2{font-size:1.3rem;font-weight:800}
+.sec-title p{font-size:.85rem;color:var(--muted);margin-top:2px}
+
+/* PHASE BLOCK (accordion) */
+.phase-block{
+  border-radius:20px;border:1.5px solid var(--border);
+  background:var(--card);overflow:hidden;margin-bottom:18px;
+}
+.phase-header{
+  padding:20px 24px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:14px;
+  cursor:pointer;user-select:none;
+}
+.phase-header-icon{font-size:1.6rem;flex-shrink:0;margin-top:2px}
+.phase-tag{
+  font-size:.65rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 10px;border-radius:20px;
+  margin-bottom:6px;display:inline-block;
+}
+.phase-title{font-size:1.1rem;font-weight:800}
+.phase-sub{font-size:.82rem;color:var(--muted);margin-top:3px}
+.phase-chevron{margin-left:auto;font-size:1rem;color:var(--muted);transition:transform .3s;flex-shrink:0;margin-top:6px}
+.phase-block.open .phase-chevron{transform:rotate(180deg)}
+.phase-body{display:none;padding:20px 24px 22px}
+.phase-block.open .phase-body{display:block}
+
+/* INSIGHT GRID */
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+@media(max-width:560px){.insight-grid{grid-template-columns:1fr}}
+.ibox{background:#07101c;border-radius:14px;padding:14px 16px;border:1px solid var(--border)}
+.ibox-head{font-size:.82rem;font-weight:700;margin-bottom:5px}
+.ibox-body{font-size:.8rem;color:#9ab8d4;line-height:1.65}
+
+/* HIGHLIGHT QUOTE */
+.highlight{
+  background:#07101c;border-left:3px solid var(--accent,#a78bfa);
+  border-radius:0 12px 12px 0;
+  padding:12px 16px;margin:12px 0;
+  font-size:.84rem;color:#b0ccec;line-height:1.65;font-style:italic;
+}
+
+/* AI STRIP */
+.ai-strip{
+  display:flex;align-items:flex-start;gap:9px;
+  background:#05090f;border-radius:12px;
+  padding:12px 14px;border:1px solid #1a2540;margin-top:14px;
+}
+.ai-txt{font-size:.8rem;color:#9ab8d4;line-height:1.6}
+
+/* VISION CARDS */
+.vision-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.vcard{background:var(--card);border-radius:18px;border:1.5px solid var(--border);overflow:hidden}
+.vcard-stripe{height:3px}
+.vcard-body{padding:20px 22px}
+.vcard-icon{font-size:2rem;margin-bottom:10px}
+.vcard-title{font-size:1rem;font-weight:800;margin-bottom:6px}
+.vcard-text{font-size:.82rem;color:#9ab8d4;line-height:1.7}
+.vcard-text strong{color:var(--text)}
+.tag-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.vtag{font-size:.7rem;font-weight:600;padding:3px 11px;border-radius:20px;border:1px solid}
+
+/* PRIORITY MATRIX */
+.matrix-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+@media(max-width:520px){.matrix-wrap{grid-template-columns:1fr}}
+.quad{border-radius:16px;border:1.5px solid var(--border);background:var(--card);padding:18px}
+.quad-label{
+  font-size:.7rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.quad-label-dot{width:8px;height:8px;border-radius:50%}
+.quad-item{
+  display:flex;align-items:flex-start;gap:9px;
+  margin-bottom:12px;font-size:.8rem;color:#9ab8d4;line-height:1.55;
+}
+.quad-bullet{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;font-weight:800;margin-top:1px;
+}
+
+/* ROADMAP */
+.roadmap{display:flex;flex-direction:column;gap:0}
+.rm-item{display:flex;gap:18px;align-items:flex-start;position:relative}
+.rm-item:not(:last-child)::after{
+  content:'';position:absolute;left:21px;top:48px;
+  width:2px;bottom:-8px;
+  background:linear-gradient(180deg,var(--border) 0%, transparent 100%);
+}
+.rm-num{
+  flex-shrink:0;width:44px;height:44px;border-radius:50%;
+  border:2px solid var(--border);background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;position:relative;z-index:1;transition:all .3s;
+}
+.rm-item.done .rm-num{background:#1a3050;border-color:#3b82f6}
+.rm-content{
+  flex:1;background:var(--card);border-radius:16px;
+  border:1.5px solid var(--border);padding:16px 18px;margin-bottom:16px;
+}
+.rm-title{font-size:.95rem;font-weight:800;margin-bottom:5px}
+.rm-body{font-size:.8rem;color:#9ab8d4;line-height:1.65}
+.rm-tag{
+  display:inline-block;font-size:.65rem;font-weight:700;
+  padding:2px 9px;border-radius:20px;margin-bottom:8px;
+  letter-spacing:.08em;text-transform:uppercase;
+}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:10px 0 18px;border-radius:1px}
+
+/* ══════════════════════════════════════════
+   CREDIT
+══════════════════════════════════════════ */
+.credit{
+  text-align:center;font-size:.8rem;
+  color:#4a6a8b;padding:16px 20px 36px;
+  letter-spacing:.04em;
+}
+.credit strong{color:#7aaac8;font-weight:600}
+
+/* FADE ANIMATION */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px)}
+  to  {opacity:1;transform:translateY(0)}
+}
+.panel.active>*{animation:fadeUp .35s ease}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     UNIFIED NAV — 5 TABS
+══════════════════════════════════════ -->
+<nav class="nav">
+  <div class="tab active" style="--active:#60a5fa" onclick="showSection(0,this)">🎬 Patient Flow</div>
+  <div class="tab" style="--active:#60a5fa" onclick="showSection(1,this)">🗺️ Journey</div>
+  <div class="tab" style="--active:#a78bfa" onclick="showSection(2,this)">💡 Vision &amp; Tech</div>
+  <div class="tab" style="--active:#fbbf24" onclick="showSection(3,this)">⚡ Priority Matrix</div>
+  <div class="tab" style="--active:#34d399" onclick="showSection(4,this)">🗓️ Roadmap</div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PANEL 0: INTERACTIVE ANIMATION
+══════════════════════════════════════ -->
+<div class="panel active" id="sec0">
+
+<div class="anim-hdr">
+  <h1>Patient Journey Flow</h1>
+  <p>กดปุ่มเพื่อเดินตามเส้นทางของผู้ป่วย — ทีละขั้นตอน</p>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:#60a5fa"></div>Pre-Hospital</div>
+  <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>During Hospital</div>
+  <div class="leg"><div class="leg-dot" style="background:#34d399"></div>Post-Hospital</div>
+</div>
+
+<div class="scroll-outer" id="scrollOuter">
+<div class="flow-wrap" id="flowWrap">
+  <div class="flow-line"><div class="flow-line-fill" id="lineFill"></div></div>
+  <div class="phase-bands">
+    <div class="band-pre"></div>
+    <div class="band-dur"></div>
+    <div class="band-post"></div>
+  </div>
+  <div class="patient" id="patient">🚶</div>
+  <div class="nodes-row" id="nodesRow"></div>
+</div>
+</div>
+
+<div class="detail-section">
+  <div class="idle-card" id="idleCard">
+    <div class="idle-icon">🏥</div>
+    <div>กดปุ่ม <strong>ถัดไป →</strong> เพื่อเริ่มต้นการเดินทาง</div>
+  </div>
+  <div id="detailCard" style="display:none"></div>
+</div>
+
+<div class="controls">
+  <button class="btn-reset" id="btnReset" onclick="reset()" style="display:none">↺ เริ่มใหม่</button>
+  <button class="btn-prev" id="btnPrev" onclick="prev()" style="display:none">← ย้อนกลับ</button>
+  <span class="step-ctr" id="stepCtr"></span>
+  <button class="btn-next" id="btnNext" onclick="next()">ถัดไป →</button>
+</div>
+
+</div><!-- /sec0 -->
+
+<!-- ══════════════════════════════════════
+     PANEL 1: PATIENT JOURNEY (Strategic)
+══════════════════════════════════════ -->
+<div class="panel" id="sec1">
+<div class="strat-wrap">
+<div class="sec-title">
+  <div class="sec-icon">🗺️</div>
+  <div>
+    <h2>Patient Journey — 3 ระยะหลัก</h2>
+    <p>กลไกการเดินทางของผู้ป่วยและจุดที่ AI เข้ามาเสริม</p>
+  </div>
+</div>
+
+<!-- PRE -->
+<div class="phase-block open" id="pb0">
+  <div class="phase-header" onclick="togglePhase('pb0')">
+    <div class="phase-header-icon">🏠</div>
+    <div>
+      <div class="phase-tag" style="background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25)">Phase 1</div>
+      <div class="phase-title" style="color:#93c5fd">Pre-Hospital — ก่อนมาโรงพยาบาล</div>
+      <div class="phase-sub">การค้นหา · การประเมิน · การนัดหมาย · การเตรียมตัว</div>
+    </div>
+    <div class="phase-chevron">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="insight-grid">
+      <div class="ibox">
+        <div class="ibox-head" style="color:#93c5fd">🔍 การค้นหาข้อมูล</div>
+        <div class="ibox-body">ผู้ป่วยค้นหาแพทย์ บริการ ราคา และโปรแกรมตรวจสุขภาพผ่านช่องทาง Online/Line/Web ต้องการคำตอบที่รวดเร็วและถูกต้อง</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#93c5fd">🧮 การประเมินความเสี่ยง</div>
+        <div class="ibox-body">AI วิเคราะห์ข้อมูลสุขภาพเบื้องต้นและแนะนำ Health Package ที่เหมาะสมรายบุคคล (Risk-based Recommendation)</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#93c5fd">📅 การนัดหมายอัจฉริยะ</div>
+        <div class="ibox-body">AI Agent จัดการนัดที่ซับซ้อน — หากเลื่อนนัดหนึ่ง ระบบตรวจสอบนัดอื่นๆ และคำนวณเวลาเดินทางให้อัตโนมัติ ไม่ให้ทรัพยากรซ้อนทับ</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#93c5fd">📋 การเตรียมตัวก่อนมา</div>
+        <div class="ibox-body">ระบบส่ง Pre-visit checklist ทาง App ล่วงหน้า 1-3 วัน พร้อม Travel checklist สำหรับคนไข้ต่างจังหวัด/ต่างประเทศ</div>
+      </div>
+    </div>
+    <div class="highlight" style="--accent:#3b82f6">
+      💬 <strong>จุดเด่น:</strong> "AI Agent" เข้ามาจัดการนัดหมายที่ซับซ้อน หากเลื่อนนัดหนึ่ง ระบบจะตรวจสอบนัดอื่นๆ และคำนวณเวลาเดินทางให้คนไข้โดยอัตโนมัติ — ไม่ใช่แค่เปลี่ยนวันเวลา แต่ต้องฉลาดพอที่จะถามว่า "จะเลื่อนนัดอื่นๆ ด้วยไหม?"
+    </div>
+    <div class="ai-strip">
+      <span class="ai-pill">🤖 AI</span>
+      <span class="ai-txt">AI Chatbot 24/7 · Risk-based Package Recommendation · Smart Scheduling Agent · Preventive Care Alert (CPG) · RPM Platform · Agent Portal</span>
+    </div>
+  </div>
+</div>
+
+<!-- DURING -->
+<div class="phase-block" id="pb1">
+  <div class="phase-header" onclick="togglePhase('pb1')">
+    <div class="phase-header-icon">🏥</div>
+    <div>
+      <div class="phase-tag" style="background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)">Phase 2</div>
+      <div class="phase-title" style="color:#fde68a">During Hospital — ระหว่างรับบริการ</div>
+      <div class="phase-sub">Check-in · Triage · พบแพทย์ · Care Plan</div>
+    </div>
+    <div class="phase-chevron">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="insight-grid">
+      <div class="ibox">
+        <div class="ibox-head" style="color:#fde68a">🚪 Check-in อัจฉริยะ</div>
+        <div class="ibox-body">Self Check-in ผ่าน App/Kiosk ดึงข้อมูลอัตโนมัติ แจ้งห้องตรวจ เวลารอคาดการณ์ และ Indoor Navigation</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#fde68a">⚡ AI Triage + คัดกรอง</div>
+        <div class="ibox-body">AI ประเมินความเร่งด่วน จัดลำดับคิวตาม Acuity Level แสดงเวลารอ Real-time ทาง App</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#fde68a">🖥️ Electronic Whiteboard</div>
+        <div class="ibox-body">บอร์ดดิจิทัลในห้องพักคนไข้แสดงตารางรายวัน เช่น วันนี้ไป CT กี่โมง แพทย์จะเข้ากี่โมง ลดภาระพยาบาลตอบคำถามซ้ำๆ</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#fde68a">🎯 Proactive Screening</div>
+        <div class="ibox-body">AI เป็น "Trigger" — หากคนไข้ไม่เคยตรวจส่องกล้องตามวัย หรือมีประวัติความเสี่ยงมะเร็ง ระบบ "ดีด" ข้อมูลขึ้นมาเตือนแพทย์ทันที</div>
+      </div>
+    </div>
+    <div class="highlight" style="--accent:#f59e0b">
+      💬 <strong>จุดเด่น:</strong> AI ใช้เป็น "Trigger" เพื่อความปลอดภัยและคุณภาพ — ไม่รอให้แพทย์จำ แต่ระบบ "ดีด" ข้อมูล Proactive Screening ขึ้นมาเองตาม Risk profile ของคนไข้แต่ละราย
+    </div>
+    <div class="ai-strip">
+      <span class="ai-pill">🤖 AI</span>
+      <span class="ai-txt">Smart Check-in · AI Triage · Clinical Decision Support · Pharmacy Verification · Drug-drug Interaction · AI Early Warning · Sepsis Detection · Ambient AI Scribe</span>
+    </div>
+  </div>
+</div>
+
+<!-- POST -->
+<div class="phase-block" id="pb2">
+  <div class="phase-header" onclick="togglePhase('pb2')">
+    <div class="phase-header-icon">🏡</div>
+    <div>
+      <div class="phase-tag" style="background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25)">Phase 3</div>
+      <div class="phase-title" style="color:#6ee7b7">Post-Hospital — หลังกลับบ้าน</div>
+      <div class="phase-sub">Follow-up · Medication · Health Literacy · RPM</div>
+    </div>
+    <div class="phase-chevron">▼</div>
+  </div>
+  <div class="phase-body">
+    <div class="insight-grid">
+      <div class="ibox">
+        <div class="ibox-head" style="color:#6ee7b7">📱 Health Literacy</div>
+        <div class="ibox-body">ระบบเปลี่ยนคำแนะนำยาที่ซับซ้อน เช่น "1x2, 1x3" ให้กลายเป็นรูปแบบที่คนไข้สูงอายุอ่านแล้วเข้าใจง่าย ปฏิบัติตามได้จริง</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#6ee7b7">💊 Medication Adherence</div>
+        <div class="ibox-body">AI ติดตามการกินยา ตรวจจับ Non-adherence แจ้ง Pharmacist/Care Manager ให้ Follow-up ก่อนอาการกำเริบ</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#6ee7b7">📡 Remote Monitoring</div>
+        <div class="ibox-body">RPM ติดตาม Vital signs จากบ้าน AI วิเคราะห์แนวโน้ม Alert ทีม Clinical ทันทีเมื่อค่าผิดปกติ ลดการมา รพ. โดยไม่จำเป็น</div>
+      </div>
+      <div class="ibox">
+        <div class="ibox-head" style="color:#6ee7b7">📊 Command Center</div>
+        <div class="ibox-body">Dashboard รวม KPIs Real-time — Readmission rate, Adherence rate, PROMs, Safety events ให้ทีม Clinical เห็นภาพรวมทั้งหมด</div>
+      </div>
+    </div>
+    <div class="highlight" style="--accent:#10b981">
+      💬 <strong>จุดเด่น Health Literacy:</strong> เปลี่ยน "รับประทานยาครั้งละ 1 เม็ด วันละ 2 ครั้ง หลังอาหารเช้าและเย็น" จากคำแนะนำที่ซับซ้อนบนกระดาษ ให้กลายเป็น notification บนโทรศัพท์ พร้อมรูปภาพยาและเวลาที่ชัดเจน — คนไข้สูงอายุทำตามได้จริง
+    </div>
+    <div class="ai-strip">
+      <span class="ai-pill">🤖 AI</span>
+      <span class="ai-txt">Personalized Care Plan · Health Literacy Engine · Medication Reminder · PROMs Collection · Post-Chemo Monitoring · Readmission Prediction · RPM Platform · Clinical Command Center</span>
+    </div>
+  </div>
+</div>
+</div><!-- /strat-wrap -->
+</div><!-- /sec1 -->
+
+<!-- ══════════════════════════════════════
+     PANEL 2: VISION & TECH
+══════════════════════════════════════ -->
+<div class="panel" id="sec2">
+<div class="strat-wrap">
+<div class="sec-title">
+  <div class="sec-icon">💡</div>
+  <div>
+    <h2>Vision & Technology Insights</h2>
+    <p>ปรัชญาและมุมมองเทคโนโลยีจากการหารือ</p>
+  </div>
+</div>
+
+<div class="vision-grid">
+
+  <div class="vcard">
+    <div class="vcard-stripe" style="background:linear-gradient(90deg,#6366f1,#a78bfa)"></div>
+    <div class="vcard-body">
+      <div class="vcard-icon">🧠</div>
+      <div class="vcard-title" style="color:#c4b5fd">ปรัชญา: Informatics ต้องนำ IT</div>
+      <div class="vcard-text">
+        ปัญหาของโรงพยาบาลไทยคือการให้ <strong>คน IT</strong> (ซึ่งเน้นโครงสร้างพื้นฐาน) เป็นคนทำระบบ ทั้งที่จริงควรเป็น <strong>"Informatics"</strong> (นักสารสนเทศ ซึ่งเป็นเจ้าของปัญหา) เป็นคนคิด logic ว่า "ข้อมูลควรไหลอย่างไร" และ "AI ควรช่วยตัดสินใจตรงไหน"
+        <br><br>
+        ต้องเลิกเอา <strong>"กระดาษ"</strong> มาทำเป็น <strong>"ไฟล์ดิจิทัล"</strong> (Digitization) แต่ต้องเปลี่ยนเป็นระบบ <strong>"อัตโนมัติ"</strong> (Automation) ที่แท้จริง
+      </div>
+      <div class="tag-row">
+        <span class="vtag" style="color:#c4b5fd;border-color:rgba(196,181,253,.3)">Informatics-Led</span>
+        <span class="vtag" style="color:#c4b5fd;border-color:rgba(196,181,253,.3)">Digitization → Automation</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="vcard">
+    <div class="vcard-stripe" style="background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div>
+    <div class="vcard-body">
+      <div class="vcard-icon">🤖</div>
+      <div class="vcard-title" style="color:#93c5fd">AI Agent & Smart Interface</div>
+      <div class="vcard-text">
+        <strong>AWS Health Agent</strong> และ <strong>Salesforce Agent</strong> ฉลาดถึงขั้นรู้ตำแหน่งที่อยู่ของคนไข้ โต้ตอบถามได้ว่า <em>"จะเลื่อนนัดอื่นๆ ด้วยไหม"</em> เพื่อความสะดวกสูงสุด
+        <br><br>
+        <strong>Electronic Whiteboard</strong>: ในห้องพักคนไข้ควรมีบอร์ดดิจิทัลบอกตารางรายวัน — วันนี้ไป CT กี่โมง แพทย์จะเข้ากี่โมง ลดภาระพยาบาลและเพิ่มความพึงพอใจ
+      </div>
+      <div class="tag-row">
+        <span class="vtag" style="color:#93c5fd;border-color:rgba(147,197,253,.3)">AWS Health Agent</span>
+        <span class="vtag" style="color:#93c5fd;border-color:rgba(147,197,253,.3)">Salesforce Agent</span>
+        <span class="vtag" style="color:#93c5fd;border-color:rgba(147,197,253,.3)">Electronic Whiteboard</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="vcard">
+    <div class="vcard-stripe" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div>
+    <div class="vcard-body">
+      <div class="vcard-icon">🔗</div>
+      <div class="vcard-title" style="color:#fde68a">ปัญหา Interoperability</div>
+      <div class="vcard-text">
+        ระบบ <strong>HIS ในไทย</strong> คุยกับใครไม่รู้เรื่อง ไม่เชื่อมต่อกับ Wearable หรือเครื่องมือแพทย์ ทำให้ข้อมูลกระจัดกระจาย ไม่ไหลระหว่างบ้าน คลินิก และโรงพยาบาล
+        <br><br>
+        เป้าหมายคือผลักดันมาตรฐาน <strong>HIMSS Level 5-7</strong> เพื่อให้เกิดการเชื่อมโยงข้อมูลอย่างไร้รอยต่อ (Seamless Data Flow) ระหว่างทุก touchpoint
+      </div>
+      <div class="tag-row">
+        <span class="vtag" style="color:#fde68a;border-color:rgba(253,230,138,.3)">HIMSS Level 5-7</span>
+        <span class="vtag" style="color:#fde68a;border-color:rgba(253,230,138,.3)">Interoperability</span>
+        <span class="vtag" style="color:#fde68a;border-color:rgba(253,230,138,.3)">Wearable Integration</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="vcard">
+    <div class="vcard-stripe" style="background:linear-gradient(90deg,#10b981,#34d399)"></div>
+    <div class="vcard-body">
+      <div class="vcard-icon">📚</div>
+      <div class="vcard-title" style="color:#6ee7b7">Health Literacy by Design</div>
+      <div class="vcard-text">
+        คนไข้สูงอายุส่วนใหญ่ไม่เข้าใจคำแนะนำการใช้ยาแบบ <em>"1x2, 1x3 pc"</em> ระบบต้องเปลี่ยนให้เป็นภาษาที่ <strong>ปฏิบัติตามได้จริง</strong>
+        <br><br>
+        ออกแบบ Patient-facing interface ที่ใช้ภาพ เวลา และ Notification แทนคำย่อทางการแพทย์ — เปลี่ยนจาก "Information" เป็น "Actionable Guidance"
+      </div>
+      <div class="tag-row">
+        <span class="vtag" style="color:#6ee7b7;border-color:rgba(110,231,183,.3)">Health Literacy</span>
+        <span class="vtag" style="color:#6ee7b7;border-color:rgba(110,231,183,.3)">Patient-Centered Design</span>
+        <span class="vtag" style="color:#6ee7b7;border-color:rgba(110,231,183,.3)">Actionable UX</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /strat-wrap -->
+</div><!-- /sec2 -->
+
+<!-- ══════════════════════════════════════
+     PANEL 3: PRIORITY MATRIX
+══════════════════════════════════════ -->
+<div class="panel" id="sec3">
+<div class="strat-wrap">
+<div class="sec-title">
+  <div class="sec-icon">⚡</div>
+  <div>
+    <h2>Priority Matrix — Quick Wins</h2>
+    <p>จัดลำดับความสำคัญตาม Impact × Complexity</p>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;text-align:center;gap:2px;margin-bottom:14px">
+  <div style="font-size:.72rem;color:var(--muted);padding:6px 0">← Impact ต่ำ</div>
+  <div style="font-size:.72rem;color:var(--muted);padding:6px 0">Impact สูง →</div>
+</div>
+
+<div class="matrix-wrap">
+
+  <div class="quad" style="border-color:#22c55e44;background:#031a08">
+    <div class="quad-label" style="color:#4ade80">
+      <div class="quad-label-dot" style="background:#22c55e"></div>
+      🏆 Quick Win — ทำก่อน!
+    </div>
+    <div style="font-size:.68rem;color:#4b7a5a;margin-bottom:12px">Impact สูง · ทำได้ง่าย</div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#052e0f;color:#4ade80">1</div>
+      <div><strong style="color:#9af0b4">AI Chatbot ตอบ 24/7</strong><br>ลดเวลารอตอบจากชั่วโมงเป็นวินาที Conversion สูงทันที</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#052e0f;color:#4ade80">2</div>
+      <div><strong style="color:#9af0b4">Smart Appointment + Reminder</strong><br>ลด No-show rate และ Reschedule ที่ซับซ้อน</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#052e0f;color:#4ade80">3</div>
+      <div><strong style="color:#9af0b4">Medication Reminder App</strong><br>เพิ่ม Adherence คนไข้เรื้อรัง ลด Readmission</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#052e0f;color:#4ade80">4</div>
+      <div><strong style="color:#9af0b4">Electronic Whiteboard</strong><br>ลดภาระพยาบาลตอบคำถามซ้ำ เพิ่ม Satisfaction</div>
+    </div>
+  </div>
+
+  <div class="quad" style="border-color:#3b82f644;background:#0a1525">
+    <div class="quad-label" style="color:#60a5fa">
+      <div class="quad-label-dot" style="background:#3b82f6"></div>
+      🎯 Strategic Investment
+    </div>
+    <div style="font-size:.68rem;color:#2d4a6a;margin-bottom:12px">Impact สูง · ต้องลงทุนมาก</div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#0c1e35;color:#60a5fa">1</div>
+      <div><strong style="color:#93c5fd">Clinical Decision Support AI</strong><br>ต้องการ Data quality สูง แต่ผลกระทบต่อ Patient Outcome ใหญ่มาก</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#0c1e35;color:#60a5fa">2</div>
+      <div><strong style="color:#93c5fd">RPM Platform แบบครบวงจร</strong><br>ต้องการ Device integration + Backend ที่แข็งแกร่ง</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#0c1e35;color:#60a5fa">3</div>
+      <div><strong style="color:#93c5fd">Interoperability (HIMSS Lv.5+)</strong><br>ต้องการ Standard + Vendor cooperation ระยะยาว</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#0c1e35;color:#60a5fa">4</div>
+      <div><strong style="color:#93c5fd">Readmission Prediction AI</strong><br>ต้องการ Historical data จำนวนมากเพื่อ Train model</div>
+    </div>
+  </div>
+
+  <div class="quad" style="border-color:#6b728044;background:#0c0d0e">
+    <div class="quad-label" style="color:#9ca3af">
+      <div class="quad-label-dot" style="background:#6b7280"></div>
+      📌 Fill-in Tasks
+    </div>
+    <div style="font-size:.68rem;color:#374151;margin-bottom:12px">Impact ต่ำ · ทำได้ง่าย</div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#111213;color:#9ca3af">1</div>
+      <div><strong style="color:#d1d5db">Auto-confirmation Email/SMS</strong><br>ง่ายมาก แต่เป็น hygiene factor ที่ต้องมี</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#111213;color:#9ca3af">2</div>
+      <div><strong style="color:#d1d5db">Digital Pre-visit Checklist</strong><br>ลดเอกสารกระดาษ ผลชัดเจนแต่ไม่ Game-changer</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#111213;color:#9ca3af">3</div>
+      <div><strong style="color:#d1d5db">Online Patient Satisfaction Survey</strong><br>รวบรวม Feedback ง่าย แต่ Value อยู่ที่การ Act on it</div>
+    </div>
+  </div>
+
+  <div class="quad" style="border-color:#ef444444;background:#170505">
+    <div class="quad-label" style="color:#f87171">
+      <div class="quad-label-dot" style="background:#ef4444"></div>
+      ⚠️ Reconsider
+    </div>
+    <div style="font-size:.68rem;color:#5a1f1f;margin-bottom:12px">Impact ต่ำ · ซับซ้อนสูง</div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#1f0505;color:#f87171">!</div>
+      <div><strong style="color:#fca5a5">Full EMR Replacement</strong><br>ใช้เวลาและทรัพยากรมหาศาล แต่ Impact อาจไม่คุ้มถ้าไม่มี Interoperability plan</div>
+    </div>
+    <div class="quad-item">
+      <div class="quad-bullet" style="background:#1f0505;color:#f87171">!</div>
+      <div><strong style="color:#fca5a5">AI ที่ใช้ Data น้อยแต่ซับซ้อน</strong><br>Model ที่ Overengineered โดยไม่มี Clear use case จะกลายเป็น Technical debt</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="highlight" style="--accent:#fbbf24;margin-top:4px">
+  💡 <strong>หลักการ:</strong> เริ่มจาก Quick Wins เพื่อสร้าง Trust และ ROI ชัดเจนก่อน จากนั้นค่อยลงทุนใน Strategic Investment ที่ต้องการเวลาและทรัพยากรมากกว่า — อย่า "Boil the Ocean" ด้วยการทำทุกอย่างพร้อมกัน
+</div>
+</div><!-- /strat-wrap -->
+</div><!-- /sec3 -->
+
+<!-- ══════════════════════════════════════
+     PANEL 4: ROADMAP
+══════════════════════════════════════ -->
+<div class="panel" id="sec4">
+<div class="strat-wrap">
+<div class="sec-title">
+  <div class="sec-icon">🗓️</div>
+  <div>
+    <h2>แผนการดำเนินงานต่อจากนี้</h2>
+    <p>5 เส้นทางที่ตกลงร่วมกัน</p>
+  </div>
+</div>
+
+<div class="roadmap">
+
+  <div class="rm-item done">
+    <div class="rm-num">📊</div>
+    <div class="rm-content">
+      <div class="rm-tag" style="background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25)">Step 1 — In Progress</div>
+      <div class="rm-title" style="color:#93c5fd">แปลง Excel เป็น Visual Flow</div>
+      <div class="rm-body">นำข้อมูลใน Excel มาทำเป็น Interactive Animation ที่แสดง Flow ของ Patient Journey (Pre, During, Post) ให้ทีมงานเห็นภาพเดียวกันได้ง่ายขึ้น ✅ <strong>ดูได้ใน Tab 🎬 Patient Flow</strong></div>
+    </div>
+  </div>
+
+  <div class="rm-item">
+    <div class="rm-num">⚡</div>
+    <div class="rm-content">
+      <div class="rm-tag" style="background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)">Step 2 — Next</div>
+      <div class="rm-title" style="color:#fde68a">จัดทำ Priority Matrix</div>
+      <div class="rm-body">สร้างตารางวิเคราะห์ <strong>Impact × Complexity</strong> เพื่อหา "Quick Win" — งานไหนทำแล้วเห็นผลกับคนไข้หรือโรงพยาบาลมากที่สุด และ Implement ได้ง่ายที่สุด <em>(ดูได้ใน Tab ⚡ Priority Matrix)</em></div>
+    </div>
+  </div>
+
+  <div class="rm-item">
+    <div class="rm-num">🤝</div>
+    <div class="rm-content">
+      <div class="rm-tag" style="background:rgba(167,139,250,.12);color:#c4b5fd;border:1px solid rgba(167,139,250,.25)">Step 3 — Planning</div>
+      <div class="rm-title" style="color:#ddd6fe">ดึง Tech Partner & Vendor เข้ามา</div>
+      <div class="rm-body">ติดต่อบริษัทเทคโนโลยี เช่น <strong>AWS, Salesforce</strong> หรือบริษัทในไทยที่ทำด้าน Whiteboard/Platform เพื่อให้นำ Solution มา <strong>Demo ตามจุดต่างๆ ใน Patient Journey</strong> ที่วางไว้ เป้าหมาย: สร้าง Use Case จริง ไม่ใช่แค่ทฤษฎี</div>
+    </div>
+  </div>
+
+  <div class="rm-item">
+    <div class="rm-num">🎓</div>
+    <div class="rm-content">
+      <div class="rm-tag" style="background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.25)">Step 4 — Planning</div>
+      <div class="rm-title" style="color:#6ee7b7">พัฒนาหลักสูตร Competency-Based</div>
+      <div class="rm-body">จัดทำหลักสูตรอบรมร่วมกับ <strong>วิทยาลัยเภสัชศาสตร์และสภาเภสัชกรรม</strong> เพื่อเตรียม:<br>• นักสารสนเทศทางสุขภาพ (Health Informatics)<br>• เภสัชกรยุค AI (AI-Ready Pharmacist)<br>• บุคลากรให้พร้อมกับ Digital Health Transformation</div>
+    </div>
+  </div>
+
+  <div class="rm-item">
+    <div class="rm-num">✈️</div>
+    <div class="rm-content">
+      <div class="rm-tag" style="background:rgba(251,146,60,.12);color:#fdba74;border:1px solid rgba(251,146,60,.25)">Step 5 — Long-term</div>
+      <div class="rm-title" style="color:#fed7aa">ศึกษาดูงาน HIMSS</div>
+      <div class="rm-body">วางแผนพาทีมงานด้าน Health Tech ไปดูงาน <strong>HIMSS</strong> เพื่อ:<br>• เห็นภาพ "System Thinking" และ "Informatics" ที่แท้จริงในระดับสากล<br>• นำ Best Practice มาปรับใช้กับโรงพยาบาลในประเทศไทย<br>• สร้าง Network กับ Health Tech ระดับโลก</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="highlight" style="--accent:#34d399;margin-top:8px">
+  🎯 <strong>เป้าหมายร่วม:</strong> สร้าง Patient Journey ที่ขับเคลื่อนด้วย AI อย่างครบวงจร — ตั้งแต่ก่อนคนไข้จะมา จนกลับบ้านและติดตามผล โดยมี Evidence-based outcomes ที่วัดได้จริง และบุคลากรที่พร้อมรับมือกับการเปลี่ยนแปลง
+</div>
+</div><!-- /strat-wrap -->
+</div><!-- /sec4 -->
+
+<!-- ══════════════════════════════════════
+     CREDIT
+══════════════════════════════════════ -->
+<div class="credit">ออกแบบโดย <strong>ภก.กมลศักดิ์ เรืองเจริญรุ่ง</strong> และ <strong>ดร.ภก.วิรุณ เวชศิริ</strong></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  PANEL NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function showSection(idx, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sec'+idx).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function togglePhase(id){
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ANIMATION DATA — 19 STEPS
+// ══════════════════════════════════════════════════════════════
+const STEPS = [
+  // ── PRE (0-5) ──────────────────────────────────────────────
+  {
+    phase:'pre', icon:'🔍', label:'ค้นหา',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 1', title:'ค้นหาข้อมูลโรงพยาบาล',
+    sub:'ผู้ป่วยเริ่มต้นจากการค้นหาออนไลน์ หรือถามผ่าน Chat / Line',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'เข้าถึงข้อมูลง่าย ตอบเร็ว ถูกต้อง เช่น แพทย์ที่เชี่ยวชาญ บริการที่มี ราคา โปรแกรมตรวจสุขภาพ'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'มี Omnichannel ให้ผู้ป่วยติดต่อ — Website, Line OA, App, โทรศัพท์ และตอบสนองได้ทันที ตลอด 24 ชม.'},
+      {head:'📊 KPI',body:'เวลาตอบสนองครั้งแรก (ต้องการ < 1 นาที) · ความถูกต้องของข้อมูล · NPS ก่อนตัดสินใจ'},
+      {head:'⚠️ Pain Point',body:'รอนานกว่าจะมีคนตอบ ข้อมูลบนเว็บไม่ up-to-date ไม่รู้ว่าแพทย์คนไหนเชี่ยวชาญอะไร'},
+    ],
+    ai:'AI Chatbot ตอบอัตโนมัติ 24/7 · Knowledge Base สด · เส้นทาง Routing ถึงแพทย์ที่เหมาะสม'
+  },
+  {
+    phase:'pre', icon:'🧮', label:'ประเมิน',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 2', title:'AI ประเมินความเสี่ยงและแนะนำ',
+    sub:'ระบบถามอาการ วิเคราะห์ความเสี่ยง และแนะนำ Package หรือแผนกที่เหมาะสม',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ได้รับคำแนะนำที่ตรงกับปัญหาสุขภาพจริงๆ ไม่ใช่แค่โปรแกรมทั่วไป'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'มี AI Risk Assessment ถามข้อมูลสุขภาพ วิเคราะห์ความเสี่ยง แล้วแนะนำ Health Package ที่เหมาะสมรายบุคคล'},
+      {head:'📊 KPI',body:'% คนที่ได้ Package ตรงกับความต้องการ · ความพึงพอใจต่อคำแนะนำ · Conversion to appointment'},
+      {head:'⚠️ Pain Point',body:'ผู้ป่วยไม่รู้จะตรวจอะไร เลือก Package ผิด หรือซื้อโปรแกรมที่ไม่จำเป็น เสียเงินโดยเปล่าประโยชน์'},
+    ],
+    ai:'AI Symptom Checker · Risk-based Package Recommendation · CPG-guided Preventive Screening Alert'
+  },
+  {
+    phase:'pre', icon:'✅', label:'ตัดสินใจ',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 3', title:'ตัดสินใจเป็นคนไข้',
+    sub:'ลูกค้าตัดสินใจเลือก รพ. และพร้อมนัดหมาย — Conversion จากผู้สนใจเป็นคนไข้',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ต้องการข้อมูลที่ครบ เช่น แผนการรักษา ราคา ประกันรองรับไหม ระยะเวลา เพื่อประกอบการตัดสินใจ'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ส่ง Treatment Plan พร้อมราคาและตัวเลือกการชำระเงิน ภายใน 2-4 ชม. รองรับการส่ง Referral จาก Agent หรือ Insurance'},
+      {head:'📊 KPI',body:'Conversion rate (Non-patient → Patient) · เวลาตอบกลับ Treatment Plan · % ที่มาจาก Agent/Insurance'},
+      {head:'⚠️ Pain Point',body:'รอคำตอบนาน เปรียบเทียบราคาไม่ได้ ไม่รู้ว่าประกันตัวเองครอบคลุมหรือเปล่า'},
+    ],
+    ai:'AI-generated Treatment Plan + Pricing · Insurance Coverage Checker · Agent Portal API'
+  },
+  {
+    phase:'pre', icon:'📅', label:'นัดหมาย',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 4', title:'จองนัดหมาย',
+    sub:'ผู้ป่วยนัดผ่าน App, Website หรือโทรศัพท์ ระบบยืนยันและส่ง Reminder อัตโนมัติ',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'นัดง่าย เร็ว เลือกวันเวลาที่สะดวกได้ ถ้ามีหลายนัดในวันเดียวควรจัดให้ต่อเนื่องกัน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'Smart Scheduling จัดคิวทรัพยากร (แพทย์, ห้องตรวจ, CT, Lab) ให้ไม่ซ้อนทับ ส่ง Confirmation + Reminder ล่วงหน้า'},
+      {head:'📊 KPI',body:'% No-show rate · เวลาเฉลี่ยในการจองนัด · Patient satisfaction ต่อขั้นตอนนัดหมาย'},
+      {head:'⚠️ Pain Point',body:'โทรจองแล้วสาย รอคิวนาน วันนัดซ้ำกับนัดอื่น ลืมนัด ไม่ได้รับ Reminder'},
+    ],
+    ai:'Smart Appointment Scheduler · Automated Reminder (SMS/Line/App) · AI Queue Optimization'
+  },
+  {
+    phase:'pre', icon:'📋', label:'เตรียมตัว',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 5', title:'เตรียมตัวก่อนมา รพ.',
+    sub:'ผู้ป่วยได้รับข้อมูลครบก่อนวันนัด — ข้อปฏิบัติตัว, เอกสาร, ยาที่ต้องหยุด',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'รู้ว่าต้องเตรียมอะไรบ้าง เอกสารอะไร งดอาหารไหม ยาตัวไหนต้องหยุด และใช้เวลานานแค่ไหน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ส่ง Pre-visit checklist ทาง App/SMS ล่วงหน้า 1-3 วัน รวมถึง Travel checklist สำหรับคนไข้ต่างจังหวัด/ต่างประเทศ'},
+      {head:'📊 KPI',body:'% ผู้ป่วยเตรียมตัวถูกต้อง · % ที่ต้องเลื่อนนัดเพราะเตรียมตัวผิด · Document readiness rate'},
+      {head:'⚠️ Pain Point',body:'ไม่รู้ว่าต้องงดอาหาร ลืมเอกสาร ยาที่รับอยู่ไม่ได้บอกแพทย์ — ทำให้วันนัดล่าช้า'},
+    ],
+    ai:'Automated Pre-visit Instructions · Medication Review Alert · Travel & Logistics Coordinator'
+  },
+  {
+    phase:'pre', icon:'📡', label:'RPM',
+    color:'#60a5fa', bg:'#1a3050', glow:'rgba(59,130,246,.22)',
+    stripe:'linear-gradient(90deg,#3b82f6,#60a5fa)',
+    tag:'Pre-Hospital · ขั้น 6 (คนไข้เรื้อรัง)', title:'Remote Patient Monitoring ที่บ้าน',
+    sub:'สำหรับคนไข้เรื้อรัง/ติดตาม — ระบบวัดสัญญาณจากบ้าน ก่อนถึงวันนัด',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'อยากรู้ว่าอาการตัวเองอยู่ในระดับไหน และไม่อยากต้องมา รพ. ถ้าไม่จำเป็น'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'จัดให้มี RPM device ส่งข้อมูลขึ้น Cloud แบบ Real-time ทีม Clinical ติดตามและ Alert ถ้าค่าผิดปกติ'},
+      {head:'📊 KPI',body:'% ผู้ป่วยที่ใช้ RPM อย่างสม่ำเสมอ · Alert response time · ลด Unnecessary visit rate'},
+      {head:'⚠️ Pain Point',body:'ไม่มีระบบ RPM ทำให้ผู้ป่วยต้องมา รพ. บ่อย หรือปล่อยให้อาการแย่ลงโดยไม่รู้ตัว'},
+    ],
+    ai:'RPM Platform · AI Vital Signs Analysis · Automated Clinical Alert · Care Manager Workflow AI'
+  },
+  // ── DURING (6-12) ──────────────────────────────────────────
+  {
+    phase:'during', icon:'🚪', label:'Check-in',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 7', title:'มาถึงและ Check-in',
+    sub:'ผู้ป่วยมาถึง รพ. — ลงทะเบียน เช็คอิน เตรียมพบแพทย์',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ลงทะเบียนเร็ว ไม่ต้องรอคิวยาว ไม่ต้องกรอกข้อมูลซ้ำที่เคยให้ไปแล้ว รู้ว่าต้องไปจุดไหนต่อ'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'มี Self Check-in ผ่าน App หรือ Kiosk ระบบดึงข้อมูลผู้ป่วยอัตโนมัติ ส่ง notification บอกห้องตรวจและเวลารอคาดการณ์'},
+      {head:'📊 KPI',body:'เวลาลงทะเบียนเฉลี่ย (เป้า < 3 นาที) · % ที่ใช้ Self Check-in · Patient satisfaction ต่อ Check-in'},
+      {head:'⚠️ Pain Point',body:'ต้องรอคิวลงทะเบียนนาน กรอกข้อมูลซ้ำ ไม่รู้ว่าต้องรอนานแค่ไหน ไปผิดจุด'},
+    ],
+    ai:'Smart Check-in App · Digital Registration · Predictive Wait Time Display · Indoor Navigation'
+  },
+  {
+    phase:'during', icon:'⚡', label:'Triage',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 8', title:'AI Triage และจัดคิว',
+    sub:'ประเมินความเร่งด่วน จัดลำดับคิว แสดงเวลารอ Real-time',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'รู้ว่าตัวเองอยู่คิวที่เท่าไหร่ รอนานแค่ไหน และได้รับการดูแลก่อนถ้าอาการรุนแรงกว่า'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ระบบ AI Triage ประเมินความเร่งด่วนอัตโนมัติ จัดคิวตาม Acuity Level แจ้งสถานะคิว Real-time ทาง App'},
+      {head:'📊 KPI',body:'Door-to-triage time · Door-to-doctor time · % คนไข้ที่รอเกิน SLA · Queue prediction accuracy'},
+      {head:'⚠️ Pain Point',body:'คนไข้เร่งด่วนถูกปล่อยทิ้งในคิวปกติ ไม่รู้เวลารอ ความเครียดจากความไม่แน่นอน'},
+    ],
+    ai:'AI Triage Engine · Intelligent Queue Management · Real-time Wait Display · ER Capacity AI'
+  },
+  {
+    phase:'during', icon:'👨‍⚕️', label:'พบแพทย์',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 9', title:'พบแพทย์และวินิจฉัย',
+    sub:'แพทย์ตรวจ วินิจฉัย และวางแผนการรักษา โดยมี AI ช่วยสนับสนุนการตัดสินใจ',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'แพทย์รับรู้ประวัติทั้งหมด ให้เวลาพูดคุยเพียงพอ ได้รับการอธิบายที่เข้าใจ รู้แผนการรักษาชัดเจน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'แพทย์เห็นประวัติรักษาครบบนหน้าจอ ระบบ Clinical Decision Support แนะนำ Guideline ที่เกี่ยวข้อง Ambient AI บันทึกโดยอัตโนมัติ'},
+      {head:'📊 KPI',body:'Diagnostic accuracy rate · Time per consultation · % adherence to clinical guidelines · Patient-doctor communication score'},
+      {head:'⚠️ Pain Point',body:'แพทย์ไม่เห็นประวัติเก่า ต้องเสียเวลาพิมพ์ บันทึก ลด Time กับคนไข้'},
+    ],
+    ai:'Clinical Decision Support AI · Ambient AI Scribe · Evidence-based Guideline Suggester · Diagnostic Imaging AI'
+  },
+  {
+    phase:'during', icon:'💊', label:'เภสัชกร',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 10', title:'เภสัชกรและความปลอดภัยยา',
+    sub:'เภสัชกร review ยา ตรวจสอบ interaction และจ่ายยาปลอดภัย',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ได้รับยาที่ถูกต้อง เข้าใจวิธีกิน ผลข้างเคียง และไม่มีปฏิกิริยาระหว่างยาที่อันตราย'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'AI ตรวจ Drug-drug interaction, ขนาดยาตาม Renal/Hepatic function, Allergy alert ก่อน Dispense — โดยเฉพาะ Chemotherapy dosing'},
+      {head:'📊 KPI',body:'Medication error rate · Time to dispensing · Pharmacist intervention rate · Near-miss detection rate'},
+      {head:'⚠️ Pain Point',body:'Polypharmacy ทำให้เสี่ยง interaction สูง ขนาดยาต้องปรับตามไตหรือตับที่เปลี่ยนแปลง'},
+    ],
+    ai:'AI Drug-Drug Interaction Check · Chemotherapy Dosing Calculator · Renal/Hepatic Dose Adjustment · Allergy Alert'
+  },
+  {
+    phase:'during', icon:'🔬', label:'Lab/Scan',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 11', title:'ตรวจ Lab และ Imaging',
+    sub:'ทำ Lab, X-ray, CT, MRI — ผลถูกส่งถึงแพทย์และผู้ป่วยรวดเร็ว',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'รู้ผลเร็ว เข้าใจผลได้ ไม่ต้องวิ่งไปรับใบผลเอง ไม่รอนาน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ระบบส่งผล Lab/Imaging ถึงแพทย์ทันที AI วิเคราะห์ภาพ Radiology เบื้องต้น ผู้ป่วยรับผลพร้อมคำอธิบายผ่าน App'},
+      {head:'📊 KPI',body:'Turnaround time (TAT) ของ Lab/Radiology · Critical value notification time · % ผลส่งอัตโนมัติ'},
+      {head:'⚠️ Pain Point',body:'รอผลนาน ผลไม่ถึงแพทย์ ผู้ป่วยไม่เข้าใจผลตรวจ Critical value ไม่ถูก alert ทันที'},
+    ],
+    ai:'AI Radiology Reader · Automated Lab Critical Value Alert · Patient-facing Result Explainer · PACS Integration'
+  },
+  {
+    phase:'during', icon:'🛏️', label:'รักษา',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 12', title:'รับการรักษาและ Monitor',
+    sub:'IPD/OR/Chemo — ระบบ Monitor สัญญาณชีพ Real-time ตลอดการรักษา',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'รู้สึกปลอดภัย ทีม Staff ตอบสนองเร็ว ครอบครัวได้รับอัพเดทสถานะ'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'Early Warning Score แจ้งเตือนก่อนอาการแย่ลง Sepsis AI Detection Continuous Monitoring ใน ICU/OR ติดต่อครอบครัว Real-time'},
+      {head:'📊 KPI',body:'Response time ต่อ EWS alert · Sepsis bundle compliance · Adverse event rate · ICU/OR utilization'},
+      {head:'⚠️ Pain Point',body:'อาการทรุดโดยไม่มีใครรู้ ทีม Staff ตอบสนองช้า ครอบครัวกังวลเพราะไม่มีข้อมูล'},
+    ],
+    ai:'AI Early Warning Score · Sepsis Detection · Continuous Vital Monitor · Family Communication Platform'
+  },
+  {
+    phase:'during', icon:'📋', label:'Discharge',
+    color:'#fbbf24', bg:'#2e1a00', glow:'rgba(245,158,11,.22)',
+    stripe:'linear-gradient(90deg,#d97706,#fbbf24)',
+    tag:'During Hospital · ขั้น 13', title:'วางแผน Discharge',
+    sub:'เตรียมส่งกลับบ้านอย่างปลอดภัย พร้อม Care plan ต่อเนื่อง',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'รู้วันกลับบ้าน เข้าใจขั้นตอนและเอกสาร รู้ว่าต้องปฏิบัติตัวอย่างไรหลังกลับบ้าน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'AI ประเมิน Readmission risk ก่อน Discharge วางแผน Home care และ Follow-up นัดหมาย Coordinate Home nurse ถ้าจำเป็น'},
+      {head:'📊 KPI',body:'Discharge planning completion rate · Time to discharge · Readmission prediction accuracy · Unplanned readmission rate'},
+      {head:'⚠️ Pain Point',body:'กลับบ้านโดยไม่มีแผน ไม่รู้ต้องทำอะไร กลับมา ER ซ้ำภายใน 30 วัน'},
+    ],
+    ai:'Readmission Risk Prediction AI · Personalized Discharge Plan Generator · Home Care Coordinator · Follow-up Scheduler'
+  },
+  // ── POST (13-18) ──────────────────────────────────────────
+  {
+    phase:'post', icon:'🏠', label:'Care Plan',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 14', title:'กลับบ้านพร้อม Care Plan รายบุคคล',
+    sub:'AI สร้างแผนดูแลเฉพาะบุคคล แสดงใน App พร้อมทำตามได้ทันที',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'อยากรู้ว่าต้องทำอะไรบ้าง กินยาอะไร เมื่อไหร่ต้องกลับมา และถ้ามีอาการนี้ควรทำอย่างไร'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'AI สร้าง Individualized Care Plan รายบุคคล — อาหาร กิจกรรม ยา การติดตาม แสดงใน Patient App ในรูปแบบที่เข้าใจง่าย'},
+      {head:'📊 KPI',body:'Care plan completion rate · Patient activation score · % เข้าถึง App ภายใน 24 ชม. หลัง Discharge'},
+      {head:'⚠️ Pain Point',body:'ได้ใบสรุปกระดาษที่ไม่เข้าใจ ลืมแผนการดูแล ไม่รู้ว่าทำถูกต้องหรือเปล่า'},
+    ],
+    ai:'AI Personalized Care Plan · Health Literacy Engine · Patient Portal/App · Health Coach AI'
+  },
+  {
+    phase:'post', icon:'💊', label:'ยา',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 15', title:'ติดตามการรับประทานยา',
+    sub:'AI ช่วย Remind ยา ตรวจจับ Non-adherence และ Alert เภสัชกร',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ได้รับการเตือนให้กินยาตรงเวลา และถ้ามีข้อสงสัยสามารถถามเภสัชกรได้ง่ายๆ'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ระบบ Remind กินยาผ่าน App ตรวจจับ Non-adherence pattern แจ้ง Pharmacist ถ้าผู้ป่วยไม่กินยาต่อเนื่องหลายวัน'},
+      {head:'📊 KPI',body:'Medication adherence rate · % Non-adherent patients detected · Pharmacist intervention rate · Refill on-time rate'},
+      {head:'⚠️ Pain Point',body:'ลืมกินยา หยุดยาเองเพราะรู้สึกดีขึ้น ผลข้างเคียงทำให้ไม่กินต่อ — ทำให้โรคกำเริบ'},
+    ],
+    ai:'Medication Reminder AI · Non-adherence Detection · Pharmacist Alert · Virtual Pill Tracker'
+  },
+  {
+    phase:'post', icon:'📱', label:'PROMs',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 16', title:'รายงานอาการด้วยตนเอง (PROMs)',
+    sub:'ผู้ป่วย report อาการผ่าน App AI วิเคราะห์แนวโน้ม Alert ถ้าแย่ลง',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'มีช่องทางบอกอาการได้ง่าย รู้ว่าทีมแพทย์รับทราบ และได้รับการตอบสนองถ้าอาการน่าเป็นห่วง'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ส่ง PROMs questionnaire ตามกำหนด AI วิเคราะห์ Pattern ของอาการ ถ้า Score แย่ลง Alert ทีม Clinical ให้โทรหาผู้ป่วย'},
+      {head:'📊 KPI',body:'PROMs response rate · % ที่ได้รับ Clinical intervention ทันเวลา · Quality of life score · Patient-reported outcomes'},
+      {head:'⚠️ Pain Point',body:'ผู้ป่วยอาการแย่ลงที่บ้านโดยไม่มีใครรู้ กว่าจะรู้ก็มา ER แล้ว'},
+    ],
+    ai:'PROMs Digital Collection · AI Symptom Trend Analysis · Clinical Alert Engine · Telehealth Trigger'
+  },
+  {
+    phase:'post', icon:'📡', label:'RPM',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 17', title:'Remote Monitoring ที่บ้าน',
+    sub:'อุปกรณ์ติดตาม Vital signs ส่งข้อมูล Real-time AI แจ้งเตือนทันที',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ไม่อยากมา รพ. บ่อย แต่อยากรู้ว่าอาการตัวเองปลอดภัย มีทีม Stand-by ถ้าเกิดเหตุฉุกเฉิน'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'จัด RPM device ติดตาม BP, SpO2, HR, Glucose ฯลฯ AI วิเคราะห์ Trend แจ้ง Clinical team เมื่อค่าผิดปกติ จัดส่ง Ambulance ถ้า Critical'},
+      {head:'📊 KPI',body:'RPM compliance rate · Alert-to-response time · Avoidable hospitalization rate · Cost per QALY'},
+      {head:'⚠️ Pain Point',body:'ผู้ป่วยโรคหัวใจ/ความดัน/เบาหวาน มีความเสี่ยงสูงระหว่างอยู่บ้าน โดยเฉพาะช่วงหลัง Discharge 30 วันแรก'},
+    ],
+    ai:'IoT RPM Platform · AI Vital Analysis · Automated Emergency Dispatch · Care Manager Dashboard'
+  },
+  {
+    phase:'post', icon:'🔄', label:'Follow-up',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 18', title:'ติดตามผลและนัด Follow-up',
+    sub:'ระบบ Remind นัด Telehealth หรือมา รพ. ตามกำหนด ไม่ให้หลุดหาย',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'ได้รับการแจ้งเตือนนัดล่วงหน้า Telehealth ได้โดยไม่ต้องเดินทาง และมีช่องทางถามคำถามได้ง่าย'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'ระบบ Follow-up Reminder อัตโนมัติ ถ้าไม่ตอบสนอง AI escalate ให้ Care team ติดต่อ รองรับ Telehealth สำหรับ routine follow-up'},
+      {head:'📊 KPI',body:'Follow-up adherence rate · No-show rate · Telehealth satisfaction · 30/60/90-day readmission rate'},
+      {head:'⚠️ Pain Point',body:'ผู้ป่วยลืมนัด ไม่สะดวกมา รพ. ปล่อยทิ้งไว้จนอาการกำเริบ'},
+    ],
+    ai:'Automated Follow-up Reminder · Telehealth Platform · No-show Predictor · Escalation AI'
+  },
+  {
+    phase:'post', icon:'📊', label:'Command',
+    color:'#34d399', bg:'#052318', glow:'rgba(16,185,129,.22)',
+    stripe:'linear-gradient(90deg,#059669,#34d399)',
+    tag:'Post-Hospital · ขั้น 19', title:'Clinical & Growth Command Center',
+    sub:'ทีม Clinical ดู Dashboard ผู้ป่วยทั้งหมด Real-time — วัด Outcome รวม',
+    boxes:[
+      {head:'💡 ความต้องการผู้ป่วย',body:'(มุมของ รพ.) ต้องการเห็น Population-level outcomes และ identify ผู้ป่วยกลุ่มเสี่ยงก่อนที่จะแย่ลง'},
+      {head:'🏥 สิ่งที่ รพ. ต้องทำ',body:'Dashboard รวม KPIs ทั้งหมด — Readmission rate, Adherence, PROMs, Safety events, Financial performance AI จัด Priority list ผู้ป่วยที่ต้องการ intervention'},
+      {head:'📊 KPI',body:'Readmission rate (30/60/90d) · Medication adherence rate · Patient satisfaction (NPS) · Clinical outcome indicators · Cost per episode'},
+      {head:'⚠️ Pain Point',body:'ข้อมูลกระจัดกระจาย ไม่มี Single view ของผู้ป่วยแต่ละราย ทีมไม่รู้ว่าใครต้องการความช่วยเหลือ'},
+    ],
+    ai:'Clinical Command Center Dashboard · Predictive Analytics · Population Health AI · Value-based Care Tracker'
+  },
+];
+
+// ══════════════════════════════════════════════════════════════
+//  ANIMATION STATE & FUNCTIONS
+// ══════════════════════════════════════════════════════════════
+let cur = -1;
+const NODE_W = 88;
+
+function buildNodes(){
+  const row = document.getElementById('nodesRow');
+  row.innerHTML = '';
+  STEPS.forEach((s,i)=>{
+    if(i>0){
+      const conn = document.createElement('div');
+      conn.className='node-conn';
+      conn.id='conn'+i;
+      row.appendChild(conn);
+    }
+    const wrap = document.createElement('div');
+    wrap.className='node-wrap';
+    wrap.id='nw'+i;
+    wrap.style.cssText=`--c:${s.color};--bg:${s.bg};--glow:${s.glow}`;
+    wrap.innerHTML=`
+      <div class="node-circle" id="nc${i}">${s.icon}</div>
+      <div class="node-name" id="nn${i}">${s.label}</div>
+    `;
+    wrap.onclick=()=>jumpTo(i);
+    row.appendChild(wrap);
+  });
+}
+
+function nodeLeft(i){
+  const nc = document.getElementById('nc'+i);
+  if(!nc) return 0;
+  const wrap = document.getElementById('flowWrap');
+  const wRect = wrap.getBoundingClientRect();
+  const nRect = nc.getBoundingClientRect();
+  return (nRect.left + nRect.width/2) - wRect.left;
+}
+
+function updateTrack(){
+  if(cur<0){
+    document.getElementById('lineFill').style.width='0%';
+    document.getElementById('patient').style.left='24px';
+    return;
+  }
+  const wrap = document.getElementById('flowWrap');
+  const left = nodeLeft(cur);
+  const pct = (left / wrap.scrollWidth)*100;
+  document.getElementById('lineFill').style.cssText=
+    `width:${pct}%;background:${STEPS[cur].stripe}`;
+  document.getElementById('patient').style.left=left+'px';
+  const outer = document.getElementById('scrollOuter');
+  outer.scrollTo({left: left - outer.clientWidth/2, behavior:'smooth'});
+}
+
+function render(){
+  STEPS.forEach((s,i)=>{
+    const nw = document.getElementById('nw'+i);
+    const nc = document.getElementById('nc'+i);
+    nc.classList.remove('active','done');
+    nw.classList.remove('active','done');
+    if(i===cur){ nc.classList.add('active'); nw.classList.add('active'); }
+    else if(i<cur){ nc.classList.add('done'); nw.classList.add('done'); nc.textContent='✓'; }
+    else { nc.textContent=s.icon; }
+    if(i>0){
+      const conn = document.getElementById('conn'+i);
+      if(conn) conn.style.background = i<=cur ? STEPS[i-1].color+'88' : 'transparent';
+    }
+  });
+
+  updateTrack();
+
+  const idle  = document.getElementById('idleCard');
+  const dcard = document.getElementById('detailCard');
+  if(cur<0){
+    idle.style.display='flex';
+    dcard.style.display='none';
+  } else {
+    idle.style.display='none';
+    dcard.style.display='block';
+    const s = STEPS[cur];
+    dcard.innerHTML=`
+      <div class="detail-card">
+        <div class="detail-stripe" style="background:${s.stripe}"></div>
+        <div class="dc-top">
+          <div class="dc-phase-tag" style="background:${s.glow};color:${s.color};border:1px solid ${s.color}44">${s.tag}</div>
+          <div class="dc-title" style="color:${s.color}">${s.title}</div>
+          <div class="dc-sub">${s.sub}</div>
+        </div>
+        <div class="dc-grid">
+          ${s.boxes.map((b,bi)=>`
+            <div class="dc-box" style="animation-delay:${bi*100}ms">
+              <div class="dc-box-head" style="color:${s.color}">${b.head}</div>
+              <div class="dc-box-body">${b.body}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="dc-ai">
+          <span class="ai-pill">🤖 AI</span>
+          <span class="ai-list">${s.ai}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const btn = document.getElementById('btnNext');
+  const ctr = document.getElementById('stepCtr');
+  const rst = document.getElementById('btnReset');
+  const prv = document.getElementById('btnPrev');
+  if(cur<0){
+    btn.textContent='ถัดไป →'; btn.className='btn-next';
+    ctr.textContent=''; rst.style.display='none'; prv.style.display='none';
+  } else if(cur<STEPS.length-1){
+    const nxt = STEPS[cur+1];
+    btn.textContent=nxt.label+' →'; btn.className='btn-next';
+    ctr.textContent=(cur+1)+' / '+STEPS.length;
+    rst.style.display='inline-block'; prv.style.display='inline-block';
+    prv.textContent='← '+(cur>0 ? STEPS[cur-1].label : 'เริ่มใหม่');
+  } else {
+    btn.textContent='✅ ครบทุกขั้นตอน'; btn.className='btn-next green';
+    ctr.textContent=STEPS.length+' / '+STEPS.length;
+    rst.style.display='inline-block'; prv.style.display='inline-block';
+    prv.textContent='← '+STEPS[cur-1].label;
+  }
+}
+
+function animScrollTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
+function next(){ if(cur<STEPS.length-1){ cur++; render(); animScrollTop(); } }
+function prev(){ if(cur>0){ cur--; render(); animScrollTop(); } else { reset(); animScrollTop(); } }
+function jumpTo(i){ if(i<=cur+1){ cur=i; render(); animScrollTop(); } }
+function reset(){ cur=-1; buildNodes(); render(); animScrollTop(); }
+
+buildNodes();
+render();
+window.addEventListener('load',()=>render());
+</script>
+</body>
+</html>
